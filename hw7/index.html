@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>hw7, Siyi Chen sc2778</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+ <script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://unpkg.com/d3-force-attract@latest"></script>
+<style>
+    .col-sm-3{
+	width:250px;
+    height:180px;
+    border: 1px solid black;
+    margin-left: 10px;
+    margin-bottom: 5px;
+}
+    .Graph9{
+    border: 1px solid black;
+    margin-left: 10px;
+    margin-bottom: 10px;
+    background-color:#c6c4c4;
+    }
+    
+    #text{
+        border: none;
+        height:20px;
+        margin-bottom: 20px;
+    }
+    #graph2{
+        background-color:#aaaaaa;
+    }
+    #graph6{
+        background-color:#808080;
+    } 
+    
+
+    </style>
+    
+    
+    </head>
+<body>
+
+<div class="container-fluid">
+  <h1>What stands out?</h1>
+  <p>The accompanying figure is from Colin Ware's book Visual Thinking for Design. It contains 8 visual features that have been found to trigger pre-attentive processing in your visual cortex.</p>
+  <div class="row">
+    <div class="col-sm-3" id="graph1"></div>
+    <div class="col-sm-3" id="graph2"></div>
+    <div class="col-sm-3" id="graph3"></div>
+     <div class="col-sm-3" id="graph4"></div>
+  </div>
+     <div class="row">
+    <div class="col-sm-3" id="text">Cast shadow</div>
+    <div class="col-sm-3" id="text">Grey value</div>
+    <div class="col-sm-3" id="text">Elongation</div>
+     <div class="col-sm-3" id="text">Misalignment</div>
+  </div>
+     <div class="row">
+    <div class="col-sm-3" id="graph5"></div>
+    <div class="col-sm-3" id="graph6"></div>
+    <div class="col-sm-3" id="graph7"></div>
+     <div class="col-sm-3" id="graph8"></div>
+  </div>
+     <div class="row">
+    <div class="col-sm-3" id="text">Filled</div>
+    <div class="col-sm-3" id="text">Blinking</div>
+    <div class="col-sm-3" id="text">Added surround color</div>
+     <div class="col-sm-3" id="text">Sharpness</div>
+  </div>
+        <p id="graph9"></p>
+
+</div>
+    <script>
+        
+    //cx from 10-240, cy from 10-170 would be out of the svg    
+        
+    var width = 250,
+        height = 180,
+        radius = 8;
+    var svg = d3.select("#graph1").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("transform", "translate(-16,-1)")
+    .attr("class","Graph1")
+    .append("g");
+     
+var defs1 = svg.append("defs");
+
+
+var dropShadowFilter = defs1.append('svg:filter')
+  .attr('id', 'drop-shadow')
+  .attr('filterUnits', "userSpaceOnUse")
+  .attr('width', '250%')
+  .attr('height', '250%');
+dropShadowFilter.append('svg:feGaussianBlur')
+  .attr('in', 'SourceGraphic')
+  .attr('stdDeviation', 2)
+  .attr('result', 'blur-out');
+dropShadowFilter.append('svg:feColorMatrix')
+  .attr('in', 'blur-out')
+  .attr('type', 'hueRotate')
+  .attr('values', 180)
+  .attr('result', 'color-out');
+dropShadowFilter.append('svg:feOffset')
+  .attr('in', 'color-out')
+  .attr('dx', 3)
+  .attr('dy', 3)
+  .attr('result', 'the-shadow');
+dropShadowFilter.append('svg:feBlend')
+  .attr('in', 'SourceGraphic')
+  .attr('in2', 'the-shadow')
+  .attr('mode', 'normal');        
+        
+ var nodes1=[];
+
+    nodes1 = d3.range(30).map(function (d) {
+        return {
+        x: width * Math.random(),
+        y: height * Math.random(),
+        r: radius * Math.random()+2,
+    inertia: 0.05 + 0.15 * Math.random()
+  };
+});
+
+        
+var simulation = d3.forceSimulation()
+  .force('attract', d3.forceAttract()
+    .target([width / 2, height / 2])
+    .strength(function (d) { return d.inertia; }))
+  .force('collide', d3.forceCollide(12))
+  .on('tick', layoutTick)
+  .nodes(nodes1);
+
+
+var node1= svg.selectAll('circle')
+   .data(nodes1)
+   .enter().append('circle');
+    
+    node1.attr('cx', function (d) { return d.x; })
+    .attr('cy', function (d) { return d.y; })
+    .attr('r', function (d) { return d.r; })
+    .attr("class","element1")
+    .style("fill","blue");
+        
+        
+    var select_samples = function(svg){
+
+        svg.selectAll(".selected_point1").remove();
+
+        var circles = svg.selectAll(".element1");
+            index_in_circles = Math.floor(Math.random()*node1._groups[0].length);
+            selected_point = d3.select(node1._groups[0][index_in_circles])
+
+            svg.select("circle")
+                .attr("class", "selected_point1")
+                .attr("cx", selected_point.attr("cx"))
+                .attr("cy", selected_point.attr("cy"))
+                .attr("r", radius) 
+                .style("filter", "url(#drop-shadow)");   
+    }
+
+        select_samples(svg);
+  
+function layoutTick (e) {
+    node1.attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; });
+}
+          
+    </script>
+    
+    <script>
+    var width = 250,
+        height = 180,
+        radius = 8;
+    var svg2 = d3.select("#graph2").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("transform", "translate(-16,-1)")
+    .append("g")
+    
+    var nodes=[];
+
+    nodes = d3.range(30).map(function (d) {
+        return {
+        x: width * Math.random(),
+        y: height * Math.random(),
+        r: radius,
+    inertia: 0.05 + 0.15 * Math.random()
+  };
+});
+
+        
+var simulation = d3.forceSimulation()
+  .force('attract', d3.forceAttract()
+    .target([width / 2, height / 2])
+    .strength(function (d) { return d.inertia; }))
+  .force('collide', d3.forceCollide(12))
+  .on('tick', layoutTick)
+  .nodes(nodes);
+
+
+var node= svg2.selectAll('circle')
+   .data(nodes)
+   .enter().append('circle');
+    
+    node.attr('cx', function (d) { return d.x; })
+    .attr('cy', function (d) { return d.y; })
+    .attr('r', function (d) { return d.r; })
+    .style("fill","grey");
+
+        
+    var select_samples = function(svg){
+
+        svg.selectAll(".selected_point_fill").remove();
+
+        var circles = svg.selectAll("circle");
+            index_in_circles = Math.floor(Math.random()*node._groups[0].length);
+            selected_point = d3.select(node._groups[0][index_in_circles])
+
+            svg.select("circle")
+                .attr("class", "selected_point_fill")
+                .attr("cx", selected_point.attr("cx"))
+                .attr("cy", selected_point.attr("cy"))
+                .attr("r", 8) 
+                .style("fill","white");
+    }
+
+        select_samples(svg2);
+  
+function layoutTick (e) {
+    node.attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; });
+}
+    
+    
+    
+    
+    </script>
+    
+    
+    
+    
+     <script>
+    var width = 250,
+        height = 180,
+        radius = 8;
+    var svg3 = d3.select("#graph3").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("transform", "translate(-16,-1)")
+    .append("g")
+     
+    
+     var nodes3=[];
+
+    nodes3 = d3.range(30).map(function (d) {
+        return {
+        x: width * Math.random(),
+        y: height * Math.random(),
+        r1: radius,
+        r2: radius,
+    inertia: 0.05 + 0.15 * Math.random()
+  };
+});
+
+        
+var simulation = d3.forceSimulation()
+  .force('attract', d3.forceAttract()
+    .target([width / 2, height / 2])
+    .strength(function (d) { return d.inertia; }))
+  .force('collide', d3.forceCollide(12))
+  .on('tick', layoutTick)
+  .nodes(nodes3);
+
+
+var node3= svg3.selectAll('ellipse')
+   .data(nodes3)
+   .enter().append('ellipse');
+    
+    node3
+    .attr('cx', function (d) { return d.x; })
+    .attr('cy', function (d) { return d.y; })
+    .attr('rx', function (d) { return d.r1; })
+    .attr('ry', function (d) { return d.r2; })
+    .style("fill","black");
+
+        
+    var select_samples = function(svg){
+
+        svg.selectAll(".selected_point3").remove();
+
+        var circles = svg.selectAll("ellipse");
+            index_in_circles = Math.floor(Math.random()*node3._groups[0].length);
+            selected_point = d3.select(node3._groups[0][index_in_circles])
+                              .attr("class", "selected_point3");
+        
+                 svg.select(".selected_point3")
+                .attr("cx", selected_point.attr("cx"))
+                .attr("cy", selected_point.attr("cy"))
+                .attr('rx', 15)
+                .attr('ry', 5);   
+    }
+
+        select_samples(svg3);
+  
+function layoutTick (e) {
+    node3.attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; });
+}
+        
+    </script>
+    
+     <script>
+    var width = 250,
+        height = 180;
+    var svg4 = d3.select("#graph4").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("transform", "translate(-16,-1)")
+    .append("g")
+    
+    for (var i=0; i <= 220; i=i+30) {
+     
+        for (var j=0; j <= height-30; j=j+20) {
+        svg4.append("line")
+        .attr("x1", i)
+        .attr("y1", j+10)
+        .attr("x2", i+20)
+        .attr("y2", j+10)
+        .style("stroke", "black")
+        .style("stroke-width", 2)
+        .attr("transform", "translate(10,10)");           
+}     
+        
+};
+    var line= svg4.selectAll("line");   
+   
+
+         
+
+         
+         
+    var select_samples = function(svg){
+        
+     var  index=Math.floor(Math.random()*line._groups[0].length);
+       selected_line = d3.select(line._groups[0][index])
+                             .attr("class", "selected_line");
+
+
+       svg.select('.selected_line')
+        .attr("x1", selected_line.attr("x1"))
+        .attr("y1", selected_line.attr("y1"))
+        .attr("x2", selected_line.attr("x2"))
+        .attr("y2", selected_line.attr("y2"))
+        .attr("transform","translate(10,4)");  
+//            
+    }
+//    
+    select_samples(svg4);  
+         
+    </script>
+    
+     <script>   
+    var width = 250,
+        height = 180,
+        radius = 8;
+    var svg5 = d3.select("#graph5").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("transform", "translate(-16,-1)")
+    .append("g")
+    var nodes2=[];
+
+    nodes2 = d3.range(25).map(function (d) {
+        return {
+        x: width * Math.random(),
+        y: height * Math.random(),
+        r: radius,
+    inertia: 0.05 + 0.15 * Math.random()
+  };
+});
+        
+var simulation = d3.forceSimulation()
+  .force('attract', d3.forceAttract()
+    .target([width / 2, height / 2])
+    .strength(function (d) { return d.inertia; }))
+  .force('collide', d3.forceCollide(12))
+  .on('tick', layoutTick)
+  .nodes(nodes2);
+
+
+var node2= svg5.selectAll('circle')
+   .data(nodes2)
+   .enter().append('circle');
+    
+    node2.attr('cx', function (d) { return d.x; })
+    .attr('cy', function (d) { return d.y; })
+    .attr('r', function (d) { return d.r; })
+    .attr('stroke-width', 5)
+    .attr('stroke',"black")
+    .attr('fill',"none");
+
+        
+    var select_samples = function(svg){
+
+        svg.selectAll(".selected_point").remove();
+
+        var circles = svg.selectAll("circle");
+            index_in_circles = Math.floor(Math.random()*node2._groups[0].length);
+            selected_point = d3.select(node2._groups[0][index_in_circles])
+
+            svg.select("circle")
+                .attr("class", "selected_point")
+                .attr("cx", selected_point.attr("cx"))
+                .attr("cy", selected_point.attr("cy"))
+                .attr("r", 8)
+                .style("fill","black");
+               
+      
+    }
+
+        select_samples(svg5);
+  
+function layoutTick (e) {
+    node2.attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; });
+}
+    
+  
+              
+         
+    </script>
+    
+     <script>
+    var width = 250,
+        height = 180,
+        radius = 8;
+         
+
+    var svg6 = d3.select("#graph6").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("transform", "translate(-16,-1)")
+    .append("g");
+    
+     var nodes6=[];
+
+    nodes6 = d3.range(30).map(function (d) {
+        return {
+        x: width * Math.random(),
+        y: height * Math.random(),
+        r: radius,
+    inertia: 0.05 + 0.15 * Math.random()
+  };
+});
+
+        
+var simulation = d3.forceSimulation()
+  .force('attract', d3.forceAttract()
+    .target([width / 2, height / 2])
+    .strength(function (d) { return d.inertia; }))
+  .force('collide', d3.forceCollide(12))
+  .on('tick', layoutTick)
+  .nodes(nodes6);
+
+
+var node6= svg6.selectAll('circle')
+   .data(nodes6)
+   .enter().append('circle');
+    
+    node6.attr('cx', function (d) { return d.x; })
+    .attr('cy', function (d) { return d.y; })
+    .attr('r', function (d) { return d.r; })
+    .style("fill","#aaaaaa");
+
+        
+    var select_samples = function(svg){
+
+        svg.selectAll(".selected_point6").remove();
+
+        var circles = svg.selectAll("circle");
+            index_in_circles = Math.floor(Math.random()*node6._groups[0].length);
+            selected_point = d3.select(node6._groups[0][index_in_circles])
+        
+            var t = d3.transition()
+                  .duration(750)
+                  .ease(d3.easeLinear);
+        
+            svg.select("circle")
+                .attr("class", "selected_point6")
+                .attr("cx", selected_point.attr("cx"))
+                .attr("cy", selected_point.attr("cy"))
+                .attr("r", 8)
+                .transition(t)
+                .on("start", function repeat() {
+                    d3.active(this)
+                      .style("fill","#ff0000")
+                      .transition(t)
+                      .style("fill","#0066ff")
+                      .transition(t)
+                      .style("fill","#00ff00")
+                      .transition(t)
+                      .style("fill","#ffff00")
+                      .transition(t)
+                      .on("start", repeat);});    
+    }
+
+        select_samples(svg6);
+  
+function layoutTick (e) {
+    node6.attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; });
+}
+    
+    </script>
+    
+     <script>     
+    var width = 250,
+        height = 180;
+    var svg7 = d3.select("#graph7").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    
+       for (var i=0; i <= 180; i=i+40) {
+     
+        for (var j=0; j <= height-30; j=j+35) {
+        svg7.append("line")
+        .attr("x1", i)
+        .attr("y1", j+20)
+        .attr("x2", i+30)
+        .attr("y2", j+20)
+        .style("stroke", "black")
+        .style("stroke-width", 2)
+        .attr("transform", "translate(10,0)");           
+}     
+        
+};
+    var line2= svg7.selectAll("line");   
+   
+ 
+    var select_samples = function(svg){
+       
+//     svg.selectAll(".selected_line").remove();    
+     var  index=Math.floor(Math.random()*line2._groups[0].length);
+       selected_line2 = d3.select(line2._groups[0][index]);
+                            
+
+
+       svg.insert('line','line')
+         .attr("class","selected_line")
+        .attr("x1", selected_line2.attr("x1"))
+        .attr("y1", selected_line2.attr("y1"))
+        .attr("x2", selected_line2.attr("x2"))
+        .attr("y2", selected_line2.attr("y2"))
+        .style("stroke", "red")
+        .style("stroke-width", 10)
+        .attr("transform","translate(10,0)");  
+            
+    }
+   
+    select_samples(svg7);  
+    
+    
+    
+    
+    
+    </script>
+    
+     <script>
+    var width = 250,
+        height = 180,
+        radius = 8;
+    var svg8 = d3.select("#graph8").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("transform", "translate(-16,0)")
+    .append("g")
+    
+    var defs = svg8.append("defs");
+    var color = d3.scaleOrdinal(d3.schemeCategory10); 
+         
+     var nodes8=[];
+
+    nodes8 = d3.range(30).map(function (d) {
+        return {
+        x: width * Math.random(),
+        y: height * Math.random(),
+        r: radius,
+    inertia: 0.05 + 0.15 * Math.random()
+  };
+});
+
+        
+var simulation = d3.forceSimulation()
+  .force('attract', d3.forceAttract()
+    .target([width / 2, height / 2])
+    .strength(function (d) { return d.inertia; }))
+  .force('collide', d3.forceCollide(12))
+  .on('tick', layoutTick)
+  .nodes(nodes8);
+
+
+var node8= svg8.selectAll('circle')
+   .data(nodes8)
+   .enter().append('circle')
+   .attr("class","element");
+    
+    node8.attr('cx', function (d) { return d.x; })
+    .attr('cy', function (d) { return d.y; })
+    .attr('r', function (d) { return d.r; })
+    .style("fill",function(d,i){return color(i%2);});
+         
+
+  //Initialize the filter
+    defs.append("filter")
+	.attr("id", "motionFilter") 	//Give it a unique ID
+	.attr("width", "300%")		//Increase the width of the filter region to remove blur "boundary"
+	.attr("x", "-100%") 			//Make sure the center of the "width" lies in the middle of the element
+	.append("feGaussianBlur")	//Append a filter technique
+	.attr("class", "blurValues")	//Needed to select later on
+	.attr("in", "SourceGraphic")	//Perform the blur on the applied element
+	.attr("stdDeviation", "2 2");	//Do a blur of 8 standard deviations in the 
+									//horizontal direction and 0 in vertical
+
+         
+           
+//Apply the filter to an element
+d3.selectAll(".element").style("filter", "url(#motionFilter)");  
+        
+    var select_samples = function(svg){
+
+        svg.selectAll(".selected_point8").remove();
+
+        var circles = svg.selectAll(".element");
+            index_in_circles = Math.floor(Math.random()*node8._groups[0].length);
+            selected_point = d3.select(node8._groups[0][index_in_circles])
+
+            svg.select("circle")
+                .attr("class", "selected_point8")
+                .attr("cx", selected_point.attr("cx"))
+                .attr("cy", selected_point.attr("cy"))
+                .attr("r", 8) 
+                .style("filter","none");
+    }
+
+        select_samples(svg8);
+  
+function layoutTick (e) {
+    node8.attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; });
+}
+    
+    </script>
+    
+    <script>
+    var width =1040,
+        height = 600,
+        radius = 12,
+        sampleSize =5;
+        
+    var svg9 = d3.select("#graph9").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("class", "Graph9")
+    .attr("transform", "translate(-16,0)")
+    .append("g")
+    
+    
+ var nodes9=[];
+
+    nodes9 = d3.range(200).map(function (d) {
+        return {
+        x: width * Math.random(),
+        y: height * Math.random(),
+        r1: radius,
+        r2: radius ,
+    inertia:0.05+ 0.0001 * Math.random()
+  };
+});
+
+        
+var simulation = d3.forceSimulation()
+  .force('attract', d3.forceAttract()
+    .target([width / 2, height / 2])
+    .strength(function (d) { return d.inertia/2; }))
+  .force('collide', d3.forceCollide(15))
+  .on('tick', layoutTick)
+  .nodes(nodes9);
+
+        
+     
+
+var node9= svg9.selectAll('ellipse')
+   .data(nodes9)
+   .enter().append('ellipse');
+    
+    node9.attr('cx', function (d) { return d.x; })
+    .attr('cy', function (d) { return d.y; })
+    .attr('rx', function (d) { return d.r1; })
+    .attr('ry', function (d) { return d.r2; })
+    .style("fill",'#6d6c6c');
+ 
+        console.log(node9);
+        
+   
+        
+    var select_samples = function(){
+       
+    var record=[]; 
+        
+     for(var i = 0; i < sampleSize; i++){    
+       var index_in_circles = Math.floor(Math.random()*node9._groups[0].length);
+        
+            
+         var selected_point = d3.select(node9._groups[0][index_in_circles])
+            
+             
+         selected_point.style("fill","white");
+            
+            record.push(index_in_circles);
+            
+    }
+     
+        for(var i = 0; i < sampleSize; i++){  
+       
+        var index_in_circles = Math.floor(Math.random()*node9._groups[0].length);
+        
+        if (!(record.includes(index_in_circles)))  { 
+            
+            
+         var selected_point = d3.select(node9._groups[0][index_in_circles])
+             
+         selected_point.attr('rx', 15)
+                       .attr('ry', 5);  
+        
+            record.push(index_in_circles);}
+
+
+    }
+        
+        
+        for(var i = 0; i < sampleSize; i++){    
+       
+        var index_in_circles = Math.floor(Math.random()*node9._groups[0].length);
+            
+             if (!(record.includes(index_in_circles)))  { 
+         
+            var selected_point = d3.select(node9._groups[0][index_in_circles])
+            
+             
+         selected_point.attr('rx', 15)
+                       .attr('ry', 5)
+                       .style("fill","white"); 
+            
+            record.push(index_in_circles);}
+
+    }
+       console.log(record);
+    
+    }
+
+        select_samples();
+        
+    
+        
+function layoutTick (e) {
+    node9.attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; });
+}
+   
+    
+    </script>
+<p id="graph10">Time Used: 0.0762s. Yeah, it is easy to find and is equal to these three categories.</p>
+</body>
+</html>

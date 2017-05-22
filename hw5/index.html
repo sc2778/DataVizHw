@@ -1,0 +1,285 @@
+<html>
+    <head>
+        <title>HW5-Siyi Chen, sc2778</title>    
+    <style>
+body { font-family: 'times new roman'; }
+svg { border: solid #ccc 1px; padding:20;} 
+    rect{fill:#47aaed;opacity:0.8;}
+        
+   </style>
+    <script src="http://d3js.org/d3.v4.min.js" type="text/JavaScript" ></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+   
+    <p id="problem1">
+       Problem 1. The file gunownership.txt contains a dataset on gun ownership percentages by state along with population and density information, compiled from the Washington Post and Wikipedia. The file us.json contains geographic data. Write code to load the provided data file and the US map data asynchronously.
+     
+    <p id="problem2">
+        Problem 2. In a &lt;p&gt; tag add an &lt;svg&gt; element create a map of the United States using the d3.usaAlbers() projection. Set the fill for each state based on the gun ownership percentage in the data file. Use a quantize scale, which takes a min and max value as its domain and an array of values as its range. The scale divides the input domain into discrete intervals, one for each value in the range array. The resulting scale function maps input values within each interval to the associated output value from that array. In this case, the output array will be a set of 10 colors. Use a constant hue, but vary the lightness and/or saturation.</p><br>
+    <p id="problem3">
+        Problem 3. In a second &lt;p&gt;tag add an &lt;svg&gt; element create another map colored according to the log of each state's population density. Create a second quantize scale, using d3.max() to find the largest population density in the dataset. (HINT: pass log values to a quantize scale, don't use a log scale.) Use the same colors as before, oriented so that lower densities and higher gun ownership percentages have the same color. Below the map describe why the log density is important -- what happens if you don't use it? (20 pts)<br>
+    
+        <b>Answer: If I don't use log, the max number of the density:10588.8 would be too big to scale the color for the map. There would be no color difference and the whole map would be just in dark.</b></p><br>
+    <p id="problem4">Problem 4. In this problem you will create a third &lt;p&gt; tag with an       &lt;svg&gt; element containing a scatterplot that compares log population density on the    x-axis to (reported) gun ownership on the y-axis. Write text responses below the            &lt;svg&gt;.<br>
+        a. For each state, add a small circle and a text showing the name of the state. Include axes and labels.<br>
+        b. Calculate the slope and intercept of the linear regression line using log population density as your input (x) variable and gun ownership as your predicted (y) variable. Plot that line in blue. <br>
+        c. Is log density a good predictor of gun ownership rates? Are there states for which log density is less accurate as a predictor of gun ownership? For example, are there states whose gun ownership is either higher or lower than you would expect based on their density? Describe how this pattern appears on the maps and how it appears on the scatterplot. <br>
+        <b>Answer: This log density is ok to predict the gun ownership rates because the r value is -0.8, which means it has a strong negative relations between gun and density. But it is not good enough because there are many outliners and not very fit on the line. This pattern appers on the map is clearer than the scatterplot because using color's intensity is intuitive to people.</b><br><br>
+        d. Calculate the slope and intercept of the linear regression line with the variables reversed (ie predict log density given gun ownership), and plot the regression line in red on the same scatter plot. Remember that you will need to plot the line with respect to the opposite axes. Are the two lines the same? Why or why not, and if not, under what conditions will they be the same?<br>
+        <b>Answer: Now the two lines are not the same because r of the both lines are -0.8 which means x and y are not prefect fit within the line. However, The shape of two lines can be the same if the r=-1, which means the dots are prefectly fitting within the line, so whether x predicts y or y predicts x is still stay in the same and without loss.</b><br><br>
+        e. Calculate the Pearson correlation coefficient for gun ownership and log population density (https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient). How does this correlation value relate to the slopes of the two regression models you created in the previous sub-problems? <br>
+        <b>Answer: The Pearson Correlation coefficient is -0.821742473435941. Every time that our data has a negative correlation coefficient, the slope of the regression line is negative. Similarly, for every time that we have a positive correlation coefficient, the slope of the regression line is positive.</b>
+        </p>
+            
+        <script>
+
+     
+      var projection = d3.geoAlbersUsa();
+      var path = d3.geoPath().projection(projection);   
+            
+      var states;
+      var usgunOwn; 
+      var usgunArray;
+      var width = 960,
+          height = 600;
+            
+      var GunOwnprecent=[];
+      var DensityNum=[];
+                
+            
+      //  row by row processing, convert string to number
+      var parseRow = function(row){
+          row.FIPS = Number(row.FIPS);
+          row.Ownership = Number(row.Ownership);
+          row.Area = Number(row.Area);
+          row.Population = Number(row.Population);
+          row.Density = Number(row.Density);
+          return row;
+        }
+            
+    //load us map      
+    //load the gunownership data
+
+        d3.queue()
+         .defer(d3.json,"us.json")
+         .defer(d3.csv, "gunownership.txt",parseRow)
+         .await(showMap);
+            
+      function showMap(error,shapes,rawGun){
+      //counties = topojson.feature(shapes, shapes.objects.counties);
+	  states = topojson.feature(shapes, shapes.objects.states);
+	
+	  usgunOwn = d3.map(rawGun, function (d) {
+		return d.FIPS;}); 
+      usgunArray=usgunOwn.values()
+      
+        for (var i=0; i<54; i++){
+            GunOwnprecent.push(usgunArray[i].Ownership);
+            GunOwnprecent.join();
+            }
+       
+        for (var i=0; i<54; i++){
+            DensityNum.push(Math.log(usgunArray[i].Density));
+            DensityNum.join();
+            }
+          
+//      console.log(usgunOwn);
+  
+      showGunMap("Ownership");
+      showDensityMap("Density"); 
+      showScatterplot();
+    };
+    
+    function showGunMap(variable){
+            
+      var svg = d3.select("#problem2").append("svg")
+                  .attr("width", width)
+                  .attr("height", height);
+      
+     
+   
+ //     var usgunArray=usgunOwn.values();
+        
+//     console.log(usgunArray)
+      
+      var percentExtent = d3.extent(usgunArray, function(d) {return d.Ownership})
+//      console.log(percentExtent);
+        
+      var percentScale = d3.scaleQuantize().domain(percentExtent).range(['#f7fbff','#deebf7','#c6dbef','#9ecae1','#6baed6','#4292c6','#2171b5','#08519c','#08306b','#041d42']);
+          
+//        console.log(percentScale)
+    
+        var paths = svg.selectAll("path.country").data(states.features);
+        pathGenerator = d3.geoPath().projection(projection);
+        paths.enter().append("path")
+             .attr("class", "country")
+            .transition().duration(1000)
+            .style("fill",function (Ownership) {
+            // Fill this in
+                var OwnershipData = usgunOwn.get(Ownership.id);
+
+            //             console.log(OwnershipData)
+         
+            if (OwnershipData) {
+                        return percentScale(OwnershipData[variable]);
+              }
+          })
+	   .attr("d", function (Ownership) {
+            return pathGenerator(Ownership);
+	   });          
+      } 
+            
+       
+          
+            
+            
+  function showDensityMap(variable){
+      
+    var svg2 = d3.select("#problem3").append("svg")
+                  .attr("width", width)
+                  .attr("height", height);   
+   
+//      var usgunArray=usgunOwn.values();
+        
+//     console.log(usgunArray)
+      
+     var DensityDomain = [Math.log(d3.min(usgunArray, function(d) {return d.Density;})), Math.log(d3.max(usgunArray,function(d) {return d.Density;}))];
+        
+      var percentScale = d3.scaleQuantize().domain(DensityDomain).range(['#041d42','#08306b','#08519c','#2171b5','#4292c6','#6baed6','#9ecae1','#c6dbef','#deebf7','#f7fbff']);
+          
+       console.log(DensityDomain)
+    
+        var paths = svg2.selectAll("path.country").data(states.features);
+        pathGenerator = d3.geoPath().projection(projection);
+        paths.enter().append("path")
+             .attr("class", "country")
+            .transition().duration(1000)
+            .style("fill",function (Ownership) {
+            // Fill this in
+                var OwnershipData = usgunOwn.get(Ownership.id);
+
+            //             console.log(OwnershipData)
+         
+            if (OwnershipData) {
+                        return percentScale(Math.log(OwnershipData[variable]));
+              }
+          })
+	   .attr("d", function (Ownership) {
+            return pathGenerator(Ownership);
+	   });          
+      } 
+            
+            
+            
+         
+            
+        function showScatterplot(){
+            var svg3 = d3.select("#problem4").append("svg")
+                  .attr("width", width)
+                  .attr("height", height);  
+   
+   
+//            var usgunArray=usgunOwn.values();
+
+      
+            var DensityDomain = [Math.log(d3.min(usgunArray, function(d) {return d.Density;})), Math.log(d3.max(usgunArray,function(d) {return d.Density;}))];
+        
+            console.log(DensityDomain)
+   
+            var x = d3.scaleLinear().domain(DensityDomain).range([20, 940]);
+          
+           
+            var xAxis = d3.axisBottom(x);
+                 svg3.append("g").attr('transform', "translate(0,580)").call(xAxis);
+     
+            
+            
+            var percentExtent = d3.extent(usgunArray, function(d) {return d.Ownership})
+            
+            var y = d3.scaleLinear().domain(percentExtent).range([580, 20]);
+           
+            var yAxis = d3.axisLeft(y);
+                svg3.append("g").attr('transform', "translate(20,0)").call(yAxis  .tickFormat(function(d) { return d + "%"; }));
+            
+            
+            var gdots= svg3.selectAll("g.dot")
+                       .data(usgunArray)
+                       .enter().append("g");
+         
+         
+            gdots.append("circle")
+              .attr("class", "dot") 
+              .attr("cx", function(d){ return x(Math.log(d.Density));})
+              .attr("cy", function(d) { return y(d.Ownership);})
+              .attr("r", 5) 
+              .style('fill',"red");
+
+            
+            gdots.append("text")
+              .text(function(d){return d.State})
+              .attr("x", function(d){ return x(Math.log(d.Density));})
+              .attr("y", function(d) { return y(d.Ownership);})
+			  .attr("fill", "black")
+			  .style("font-size", "12px")
+              .style("text-anchor", "middle")
+              .attr("transform","translate(0,-5)");
+            
+           var lr = linearRegression(GunOwnprecent,DensityNum);
+           
+            var regressionLine = svg3.append("line")
+                .attr("x1", x(DensityDomain[0]))
+                .attr("y1", y(lr.slope * DensityDomain[0] + lr.intercept))
+                .attr("x2", x(DensityDomain[1]))
+                .attr("y2", y(lr.slope * DensityDomain[1] + lr.intercept))
+                .style("stroke", "#2171b5");
+            
+          var lr2 = linearRegression(DensityNum,GunOwnprecent);
+           
+            var regressionLine2 = svg3.append("line")
+                .attr("x1", x(lr2.slope * percentExtent[0] + lr2.intercept))
+                .attr("y1", y(percentExtent[0]))
+                .attr("x2", x(lr2.slope * percentExtent[1] + lr2.intercept))
+                .attr("y2", y(percentExtent[1]))
+                .style("stroke", "#e41a1c");
+        
+                      
+                      }
+                      
+                      
+                      
+                      
+                      
+                      
+             function linearRegression(y,x){
+               var lr = {};
+               var n = y.length;
+               var sum_x = 0;
+               var sum_y = 0;
+               var sum_xy = 0;
+               var sum_xx = 0;
+               var sum_yy = 0;
+
+               for (var i = 0; i < y.length; i++) {
+
+                   sum_x += x[i];
+                   sum_y += y[i];
+                   sum_xy += (x[i]*y[i]);
+                   sum_xx += (x[i]*x[i]);
+                   sum_yy += (y[i]*y[i]);
+               }
+
+               lr['slope'] = (n * sum_xy - sum_x * sum_y) / (n*sum_xx - sum_x * sum_x);
+               lr['intercept'] = (sum_y - lr.slope * sum_x)/n;
+               lr['r2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
+               lr['r'] = (n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y));
+
+               return lr;
+           }
+       
+            
+        </script>
+  
+        
+    
+    
+    </head>
+</html>
